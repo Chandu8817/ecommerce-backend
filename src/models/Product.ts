@@ -10,7 +10,7 @@ export interface IProduct extends Document {
   stock: number;
   images: string[];
   isActive: boolean;
-  ageGroup:number;
+  ageGroup:string;
   gender :Gender;
   createdBy: mongoose.Types.ObjectId; // Reference to User (admin)
 }
@@ -25,14 +25,15 @@ const productSchema = new Schema<IProduct>(
     stock: { type: Number, required: true, min: 0 },
     images: [{ type: String }], // e.g., S3 or Cloudinary URLs
     isActive: { type: Boolean, default: true },
-    ageGroup: {type:Number, index: true},
+    ageGroup: {type:String, index: true},
     createdBy: { type: Schema.Types.ObjectId, ref: "User", required: true },
-    gender: {type:String,enum:["male","female","other"],default:"other"},
+    gender: {type:String,enum:["Boys","Girls","other"],default:"other"},
   },
   { timestamps: true }
 );
 
 // Indexing for search optimization
 productSchema.index({ name: "text", description: "text", category: 1 });
+productSchema.index({ price: 1 });
 
 export const Product = model<IProduct>("Product", productSchema);

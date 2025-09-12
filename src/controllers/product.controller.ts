@@ -133,10 +133,10 @@ export async function getProducts(
 
 export const filterProducts = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { category, brand, price, stock, createdAt, isActive, take, skip } = req.body;
+    const { category,ageGroup, gender, brand, price, stock, createdAt, isActive, take, skip,sortBy,sortOrder } = req.body;
 
     // ✅ Build cache key safely (ignore undefined/null)
-    const filters = { category, brand, price, stock, createdAt, isActive, take, skip };
+    const filters = { category,ageGroup,gender, brand, price, stock, createdAt, isActive, take, skip,sortBy,sortOrder };
     const cacheKey = `products:filter:${JSON.stringify(filters)}`;
 
     // 1️⃣ Try cache
@@ -145,18 +145,15 @@ export const filterProducts = async (req: Request, res: Response, next: NextFunc
       const parsed = JSON.parse(cached);
       return res.json({ source: "cache", ...parsed });
     }
-    const [products, total]:any = await productService.filterProducts({ category, brand, price, stock, createdAt, isActive, take, skip })
+    const [products, total]:any = await productService.filterProducts({ category,ageGroup,gender, brand, price, stock, createdAt, isActive, take, skip,sortBy,sortOrder })
     console.log(products);
     console.log(total);
     
-    await redis.setex(cacheKey, 3600, JSON.stringify({products, total}));
+    await redis.setex(cacheKey, 3600, JSON.stringify({products}));
     res.json({
       source: "db",
       data: products,
-      total,
-      page: Math.floor((skip || 0) / (take || 10)) + 1,
-      pageSize: take || 10,
-      totalPages: Math.ceil(total / (take || 10)),
+     
     });
 
   } catch (err) {

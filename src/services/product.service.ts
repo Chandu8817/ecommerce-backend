@@ -38,19 +38,51 @@ export const getProducts = async (take: number, skip: number) => {
   return products;
 };
 
-export const filterProducts = async (filter: any) => {
-  const { category, brand, price, stock, createdAt, isActive, take, skip } =
-    filter;
-  const query: any = {};
-  if (category) query.category = { $in: category };
+interface FilterOptions {
+  category?: string[];
+  ageGroup?: string[];
+  gender?: string;
+  brand?: string;
+  price?: { min?: number; max?: number };
+  stock?: { min?: number; max?: number };
+  createdAt?: { from?: string; to?: string };
+  isActive?: boolean;
+  take?: number;
+  skip?: number;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
+}
 
+export const filterProducts = async (filter: FilterOptions) => {
+  const { 
+    category, 
+    ageGroup, 
+    gender, 
+    brand, 
+    price, 
+    stock, 
+    createdAt, 
+    isActive, 
+    take, 
+    skip,
+    sortBy,
+    sortOrder
+  } = filter;
+  
+  const query: any = {};
+  
+  if (category) query.category = { $in: category };
+  if (gender) query.gender = gender;
+  if (ageGroup) query.ageGroup = { $in: ageGroup };
   if (brand) query.brand = brand;
   
   if (isActive !== undefined) query.isActive = isActive;
+  
   if (price) {
     query.price = {};
     if (price.min !== undefined) query.price.$gte = price.min;
     if (price.max !== undefined) query.price.$lte = price.max;
+    
   }
 
   if (stock) {
@@ -65,12 +97,27 @@ export const filterProducts = async (filter: any) => {
     if (createdAt.to) query.createdAt.$lte = new Date(createdAt.to);
   }
 
+  // Build sort object if sortBy is provided
+  const sortOptions: Record<string, 1 | -1> = {};
+  if (sortBy) {
+    if (sortBy === "price-low") {
+      sortOptions.price = 1;  // ascending
+    } else if (sortBy === "price-high") {
+      sortOptions.price = -1; // descending
+    } else {
+      sortOptions[sortBy] = sortOrder === "asc" ? 1 : -1;
+    }
+  }
+
   const [products, total] = await Promise.all([
     Product.find(query)
+      .sort(sortOptions)
       .skip(skip || 0)
-      .limit(take || 10),
+      .limit(take || 10)
+      .lean(),
     Product.countDocuments(query),
   ]);
+  
   return [products, total];
 };
 
