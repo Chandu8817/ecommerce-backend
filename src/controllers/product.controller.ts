@@ -6,6 +6,7 @@ import * as authService from "../services/auth.service";
 import { AuthRequest } from "../middleware/auth";
 import { IProduct } from "../models/Product";
 import { Types } from "mongoose";
+import {redis} from "../config/redisClient";
 
 export async function addProduct(
   req: AuthRequest,
@@ -45,7 +46,10 @@ export async function addProduct(
       isActive,
       createdBy: user._id,
     });
-
+    const keys = await redis.keys("products:*");
+if (keys.length) {
+  await redis.del(keys);
+}
     res.status(201).json(product);
   } catch (error) {
     next(error);
@@ -71,7 +75,10 @@ export async function addProducts(
     if (user.role != "admin") {
       return res.status(401).json({ error: "User not have this role" });
     }
-
+    const keys = await redis.keys("products:*");
+if (keys.length) {
+  await redis.del(keys);
+}
     const products = await productService.addProducts(updatedProductsInput);
 
     res.status(201).json(products);
@@ -103,8 +110,22 @@ export async function getProducts(
 ) {
   const { take, skip } = req.query
   try {
+
+     const cacheKey = `products:take=${take}:skip=${skip}`;
+
+    // 1️⃣ Check Redis cache
+    const cached = await redis.get(cacheKey);
+    if (cached) {
+      return res.json({ source: "cache", data: JSON.parse(cached) });
+    }
+
+    // 2️⃣ Fetch from DB
     const products = await productService.getProducts(Number(take), Number(skip));
-    res.json(products);
+
+    // 3️⃣ Store in cache for 1 hour
+    await redis.setex(cacheKey, 3600, JSON.stringify(products));
+
+    res.json({ source: "db", data: products });
   } catch (error) {
     next(error);
   }
@@ -113,12 +134,24 @@ export async function getProducts(
 export const filterProducts = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { category, brand, price, stock, createdAt, isActive, take, skip } = req.body;
-   
 
+    // ✅ Build cache key safely (ignore undefined/null)
+    const filters = { category, brand, price, stock, createdAt, isActive, take, skip };
+    const cacheKey = `products:filter:${JSON.stringify(filters)}`;
 
+    // 1️⃣ Try cache
+    const cached = await redis.get(cacheKey);
+    if (cached) {
+      const parsed = JSON.parse(cached);
+      return res.json({ source: "cache", ...parsed });
+    }
     const [products, total]:any = await productService.filterProducts({ category, brand, price, stock, createdAt, isActive, take, skip })
-
+    console.log(products);
+    console.log(total);
+    
+    await redis.setex(cacheKey, 3600, JSON.stringify({products, total}));
     res.json({
+      source: "db",
       data: products,
       total,
       page: Math.floor((skip || 0) / (take || 10)) + 1,
@@ -126,6 +159,25 @@ export const filterProducts = async (req: Request, res: Response, next: NextFunc
       totalPages: Math.ceil(total / (take || 10)),
     });
 
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const updateProduct = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const { id } = req.params;
+    if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+    const user = await authService.getAuthUser(req.user.id);
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+    if (user.role != "admin") {
+      return res.status(401).json({ error: "User not have this role" });
+    }
+    const { name, description, price, category, brand, stock, images, isActive } = req.body;
+    const product = await productService.updateProduct(id, { name, description, price, category, brand, stock, images, isActive });
+    res.json(product);
   } catch (err) {
     next(err);
   }

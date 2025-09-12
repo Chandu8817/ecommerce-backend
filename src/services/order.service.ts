@@ -1,5 +1,6 @@
 import app from "../app";
 import { Order, IOrder } from "../models/Order";
+import { Product } from "../models/Product";
 import { User } from "../models/User";
 import { AppError } from "../utils/AppError";
 
@@ -45,6 +46,16 @@ export const createOrder = async (orderInput: Partial<IOrder>) => {
     throw new Error("Shipping address must be in one of the allowed states");
   }
   const order = await Order.create(orderInput);
+      //update product stock
+      for (const product of products) {
+        const productData = await Product.findById(product.product)
+        if (!productData) {
+          throw new AppError("RESOURCE_NOT_FOUND", "Product not found", 404, [
+            { field: "productId", issue: "Does not exist in database" },
+          ]);
+        }
+        await Product.updateOne({ _id: product.product }, { stock: productData.stock - product.quantity });
+      }
   return order;
 };
 export const getOrderById = async (id: string) => {
@@ -122,8 +133,14 @@ export const getOrdersByStatus = async (
 };
 export const getTotalSales = async () => {
   const result = await Order.aggregate([
+    {
+      $match: {
+        status: { $in: ["delivered"] },
+      },
+    },
     { $group: { _id: null, totalSales: { $sum: "$totalAmount" } } },
   ]);
+
   return result[0]?.totalSales || 0;
 };
 export const getMonthlySales = async (year: number) => {
@@ -157,6 +174,7 @@ export const getSalesByProduct = async (
   const result = await Order.aggregate([
     { $unwind: "$products" },
     {
+
       $group: {
         _id: "$products.product",
         totalSales: {
@@ -239,6 +257,7 @@ export const updateOrderStatus = async (
   await order.save();
   return order;
 };
+
 
 const isValidShippingAddress = (address: string): boolean => {
   return SHIPPING_STATES.some((state) => address.includes(state));

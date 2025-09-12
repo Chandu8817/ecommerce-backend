@@ -46,6 +46,8 @@ describe("Order API", () => {
     buyerToken = await loginAndGetToken("user");
     // Now, create an order for that product
     const orderRes = await orderProduct(productId,buyerToken);
+    const productData = await request(app).get(`/api/products/${productId}`).set("Authorization", `Bearer ${adminToken}`);
+    expect(productData.body.stock).toBe(18);
 
   
 
@@ -54,6 +56,7 @@ describe("Order API", () => {
     expect(orderRes.body.products).toHaveLength(1);
     expect(orderRes.body.products[0].product).toBe(productId);
     expect(orderRes.body.products[0].quantity).toBe(2);
+
   });
   test("fetches an order by ID", async () => {
     // Create a product
@@ -88,6 +91,7 @@ describe("Order API", () => {
     // Create multiple orders
     for (let i = 0; i < 15; i++) {
       const orderRes = await orderProduct(productId,buyerToken);
+      console.log(orderRes.body);
       expect(orderRes.status).toBe(201);
     }
 
@@ -428,6 +432,7 @@ async function orderProduct(productId:string,token:string) {
         shippingAddress: "123 Test St, Test City, Madhya Pradesh",
         paymentMethod: "credit_card",
         totalAmount: 400,
+        
       });
       return orderRes;
   

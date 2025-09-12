@@ -3,7 +3,7 @@ import * as authService from "../services/auth.service";
 
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv"
-import { Response, Request } from "express";
+import { Response, Request, NextFunction } from "express";
 import { AuthRequest } from "../middleware/auth";
 import { AppError } from "../utils/AppError";
 
@@ -13,7 +13,7 @@ const generateToken = (id: Object) => {
     return jwt.sign({ id }, process.env.JWT_SECRECT || "secret", { expiresIn: "7d" })
 }
 
-export const register = async (req: Request, res: Response) => {
+export const register = async (req: Request, res: Response ,next:NextFunction) => {
     try {
         const { name, email, password,role } = req.body;
 
@@ -25,18 +25,12 @@ export const register = async (req: Request, res: Response) => {
             token: generateToken(user._id)
         });
     } catch (err: any) {
-        const errorResponse = new AppError(
-                "INVALID CREDIENTAILS",
-                "Invalid credientails",
-                404,
-                [{ field: "userId", issue: "Does not exist in database" }]
-              );
-        res.status(500).json(errorResponse);
+      next(err)
     }
 
 }
 
-export const login = async (req: Request, res: Response) => {
+export const login = async (req: Request, res: Response ,next:NextFunction) => {
     try {
         const { email, password } = req.body;
 
@@ -50,12 +44,13 @@ export const login = async (req: Request, res: Response) => {
         });
 
     } catch (err: any) {
-        res.status(500).json({ message: err.message });
+      next(err)
     }
 
 }
 
-export const getAuthUser = async (req: AuthRequest, res: Response) => {
+
+export const getAuthUser = async (req: AuthRequest, res: Response,next:NextFunction) => {
     try {
         if (!req.user) return res.status(401).json({ error: "Unauthorized" });
         const user = await authService.getAuthUser(req.user.id);
@@ -64,6 +59,6 @@ export const getAuthUser = async (req: AuthRequest, res: Response) => {
         }
         res.json(user);
     } catch (e: any) {
-        res.status(400).json({ error: e.message });
+      next(e)
     }
 };

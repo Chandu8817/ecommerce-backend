@@ -52,7 +52,7 @@ beforeEach(async () => {
       .set("Authorization", `Bearer ${token}`)
       .send(products);
       
-      console.log(result.body);
+     
 });
 
 describe("Product API", () => {
@@ -102,8 +102,8 @@ describe("Product API", () => {
     const res = await request(app).get("/api/products?take=5&skip=5");
 
     expect(res.status).toBe(200);
-    expect(res.body).toHaveLength(5);
-    expect(res.body[0].name).toBe("Product 6");
+    expect(res.body.data).toHaveLength(5);
+    expect(res.body.data[0].name).toBe("Product 6");
   });
 
   test("should return 404 when no products found", async () => {
@@ -123,7 +123,7 @@ describe("Product filtering", () => {
             category: ["Cat1"],
      };
     const res = await request(app).post("/api/products/filter").send(filter);
-    console.log(res.body);
+   
 
     expect(res.status).toBe(200);
     expect(res.body.data.every((p: any) => p.category === "Cat1")).toBe(true);
@@ -167,7 +167,7 @@ describe("Product filtering", () => {
   test("filters by isActive", async () => {
     const filter = { isActive: false };
     const res = await request(app).post("/api/products/filter").send(filter);
-    console.log(res.body);
+   
 
     expect(res.status).toBe(200);
     expect(res.body.data).toHaveLength(10);

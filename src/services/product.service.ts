@@ -73,3 +73,13 @@ export const filterProducts = async (filter: any) => {
   ]);
   return [products, total];
 };
+
+export const updateProduct = async (id: string, productInput: Partial<IProduct>) => {
+  const product = await Product.findByIdAndUpdate(id, productInput, { new: true });
+  if (!product) {
+    throw new AppError("RESOURCE_NOT_FOUND", "Product not found", 404, [
+      { field: "productId", issue: "Does not exist in database" },
+    ]);
+  }
+  return product;
+};

@@ -33,6 +33,7 @@ export const login = async (userInput: Partial<IUser>) => {
 
 }
 
+
 export const  getAuthUser = async (_id :string)=>{
 
     const user = await User.findById(_id);

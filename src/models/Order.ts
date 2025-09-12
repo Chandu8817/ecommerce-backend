@@ -1,7 +1,7 @@
 import mongoose ,{Schema,model} from "mongoose";
 
 
-export type OrderStatus = "pending" | "shipped" | "delivered" | "cancelled";
+export type OrderStatus = "pending" | "shipped" | "delivered" | "cancelled" | "return" | "refunded";
 export interface IOrder extends mongoose.Document {
     user : mongoose.Types.ObjectId; // Reference to User
     products: { product: mongoose.Types.ObjectId; quantity: number }[]; // Array of products with quantities
@@ -9,6 +9,7 @@ export interface IOrder extends mongoose.Document {
     status: OrderStatus;
     shippingAddress: string;
     paymentMethod: string;
+    shippingId :string; 
     createdAt: Date;
     updatedAt: Date;
 
@@ -18,9 +19,10 @@ const orderSchema = new Schema<IOrder>({
     products: [{product: {type:Schema.Types.ObjectId,ref:"Product",requried:true},
     quantity: {type:Number,required:true,min:1}}],
     totalAmount: {type:Number,required:true,min:0},
-    status: {type:String,enum:["pending","shipped","delivered","cancelled"],default:"pending"},
+    status: {type:String,enum:["pending","shipped","delivered","cancelled","return","refunded"],default:"pending"},
     shippingAddress: {type:String,required:true},
     paymentMethod: {type:String,required:true},
+    shippingId : {type:String,index:true}, 
     createdAt: {type:Date,default:Date.now},
     updatedAt: {type:Date,default:Date.now}
 
