@@ -3,7 +3,7 @@ import { Order, IOrder } from "../models/Order";
 import { Product } from "../models/Product";
 import { User } from "../models/User";
 import { AppError } from "../utils/AppError";
-
+import { razorpay } from "../utils/razorpay";
 const SHIPPING_STATES = [
   "Madhya Pradesh",
   "Uttar Pradesh",

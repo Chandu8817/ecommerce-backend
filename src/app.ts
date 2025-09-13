@@ -13,6 +13,7 @@ import wishlistRoutes from "./routes/wishlist.route";
 import cartRoutes from "./routes/cart.route";
 import reviewRoutes from "./routes/review.route"
 import categoryRoutes from "./routes/category.routes"
+import paymentRoutes from "./routes/payment.route"
 
 dotenv.config()
 
@@ -33,6 +34,7 @@ app.use("/api/wishlist", wishlistRoutes);
 app.use("/api/cart", cartRoutes);
 app.use("/api/reviews", reviewRoutes);
 app.use("/api/categories", categoryRoutes);
+app.use("/api/payment", paymentRoutes);
 app.use(errorHandler);
 
 

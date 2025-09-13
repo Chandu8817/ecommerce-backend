@@ -1,4 +1,4 @@
-import { IUser, User } from "../models/User";
+import { IShippingAddress, IUser, User } from "../models/User";
 import { AppError } from "../utils/AppError";
 
 export const register = async (userInput: Partial<IUser>) => {
@@ -39,5 +39,24 @@ export const  getAuthUser = async (_id :string)=>{
     const user = await User.findById(_id);
     return user
 
+
+}
+
+export const addShippingAddress = async (_id :string,shippingAddress:IShippingAddress)=>{
+
+    const user = await User.findById(_id);
+    if (!user) throw new Error("User not found");
+    user.shippingAddress.push(shippingAddress);
+    await user.save();
+    return user
+
+}
+
+export const getShippingAddress = async (_id :string)=>{
+
+    const user = await User.findById(_id);
+    if (!user) throw new Error("User not found");
+    const shippingAddress = user.shippingAddress;
+    return shippingAddress
 
 }

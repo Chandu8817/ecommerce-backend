@@ -62,3 +62,32 @@ export const getAuthUser = async (req: AuthRequest, res: Response,next:NextFunct
       next(e)
     }
 };
+
+export const addShippingAddress = async (req: AuthRequest, res: Response,next:NextFunction)=>{
+    try {
+        if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+        const {name,street,city,state,zipCode,phone,isDefault} = req.body;
+        const user = await authService.addShippingAddress(req.user.id,{name,street,city,state,zipCode,phone,isDefault});
+        if (!user) {
+            return res.status(404).json({ error: "User not found" });
+        }
+        res.json(user);
+    } catch (e: any) {
+      next(e)
+    }
+
+}
+
+export const getShippingAddress = async (req: AuthRequest, res: Response,next:NextFunction)=>{
+    try {
+        if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+        const addresses = await authService.getShippingAddress(req.user.id);
+        if (!addresses) {
+            return res.status(404).json({ error: "User not found" });
+        }
+        res.json(addresses);
+    } catch (e: any) {
+      next(e)
+    }
+
+}
