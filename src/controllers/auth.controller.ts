@@ -78,6 +78,21 @@ export const addShippingAddress = async (req: AuthRequest, res: Response,next:Ne
 
 }
 
+export const removeShippingAddress = async (req: AuthRequest, res: Response,next:NextFunction)=>{
+    try {
+        if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+        const {id} = req.query;
+        const user = await authService.removeShippingAddress(req.user.id,id as unknown as number);
+        if (!user) {
+            return res.status(404).json({ error: "User not found" });
+        }
+        res.json(user);
+    } catch (e: any) {
+      next(e)
+    }
+
+}
+
 export const getShippingAddress = async (req: AuthRequest, res: Response,next:NextFunction)=>{
     try {
         if (!req.user) return res.status(401).json({ error: "Unauthorized" });

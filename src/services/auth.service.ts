@@ -52,6 +52,18 @@ export const addShippingAddress = async (_id :string,shippingAddress:IShippingAd
 
 }
 
+export const removeShippingAddress = async (_id :string,id:number)=>{
+
+    const user = await User.findById(_id);
+    if (!user) throw new Error("User not found");
+    const addresses = user.shippingAddress;
+    addresses.splice(id,1);
+    user.shippingAddress = addresses;
+    await user.save();
+    return user
+
+}
+
 export const getShippingAddress = async (_id :string)=>{
 
     const user = await User.findById(_id);
