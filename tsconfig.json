@@ -9,6 +9,6 @@
     "strict": true,
     "skipLibCheck": true
   },
-  "include": ["src"],               // only compile src/
+  "include": ["src"],     
   "exclude": ["node_modules", "dist", "test", "**/*.config.ts"]
 }
