@@ -1,26 +1,54 @@
-import Redis from "ioredis";
+import Redis, { Redis as RedisClient } from "ioredis";
 import dotenv from "dotenv";
 dotenv.config();
 
-export const redis = new Redis(process.env.REDIS_URL!, {
-  maxRetriesPerRequest: null,    // avoids "max retries per request" errors
-  enableReadyCheck: false,       // important for cloud/managed Redis
-  reconnectOnError: (err) => {
-    const targetErrors = ["READONLY", "EPIPE", "ECONNRESET"];
-    if (targetErrors.some((msg) => err.message.includes(msg))) {
-      return true; // force reconnect
+class RedisManager {
+  private static instance: RedisManager;
+  private client: RedisClient | null = null;
+
+  private constructor() {}
+
+  public static getInstance(): RedisManager {
+    if (!RedisManager.instance) {
+      RedisManager.instance = new RedisManager();
     }
-    return false;
-  },
-  tls: process.env.REDIS_URL?.startsWith("rediss://") ? {} : undefined, // enable TLS if URL is rediss://
-});
+    return RedisManager.instance;
+  }
 
-redis.on("connect", () => {
-  console.log("✅ Connected to Redis");
-});
+  public async getClient(): Promise<RedisClient> {
+    if (!this.client || !this.client.status || this.client.status === 'end') {
+      this.client = new Redis(process.env.REDIS_URL!, {
+        maxRetriesPerRequest: 10,
+        enableReadyCheck: true,
+        connectTimeout: 10000,
+        commandTimeout: 5000,
+        retryStrategy: (times) => {
+          if (times > 5) {
+            console.log('Max Redis reconnection attempts reached');
+            return null;
+          }
+          return Math.min(times * 200, 2000);
+        }
+      });
 
-redis.on("error", (err) => {
-  console.error("❌ Redis connection error:", err);
-});
+      this.client.on("connect", () => {
+        console.log("✅ Connected to Redis");
+      });
 
-export default redis;
+      this.client.on("error", (err) => {
+        console.error("❌ Redis connection error:", err.message);
+      });
+    }
+    return this.client;
+  }
+
+  public async closeConnection(): Promise<void> {
+    if (this.client) {
+      await this.client.quit();
+      this.client = null;
+    }
+  }
+}
+
+export const redisManager = RedisManager.getInstance();
+export default redisManager;

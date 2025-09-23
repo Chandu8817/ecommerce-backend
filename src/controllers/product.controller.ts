@@ -6,7 +6,7 @@ import * as authService from "../services/auth.service";
 import { AuthRequest } from "../middleware/auth";
 import { IProduct } from "../models/Product";
 import { Types } from "mongoose";
-import {redis} from "../config/redisClient";
+import { redisManager } from '../config/redisClient';
 
 export async function addProduct(
   req: AuthRequest,
@@ -46,10 +46,18 @@ export async function addProduct(
       isActive,
       createdBy: user._id,
     });
-    const keys = await redis.keys("products:*");
-if (keys.length) {
-  await redis.del(keys);
-}
+    
+    try {
+      const redisClient = await redisManager.getClient();
+      const keys = await redisClient.keys("products:*");
+      if (keys.length) {
+        await redisClient.del(keys);
+      }
+    } catch (redisError) {
+      console.error("Error clearing Redis cache:", redisError);
+      // Continue with the response even if Redis fails
+    }
+    
     res.status(201).json(product);
   } catch (error) {
     next(error);
@@ -75,10 +83,16 @@ export async function addProducts(
     if (user.role != "admin") {
       return res.status(401).json({ error: "User not have this role" });
     }
-    const keys = await redis.keys("products:*");
-if (keys.length) {
-  await redis.del(keys);
-}
+    try {
+      const redisClient = await redisManager.getClient();
+      const keys = await redisClient.keys("products:*");
+      if (keys.length) {
+        await redisClient.del(keys);
+      }
+    } catch (redisError) {
+      console.error("Error clearing Redis cache:", redisError);
+      // Continue with the response even if Redis fails
+    }
     const products = await productService.addProducts(updatedProductsInput);
 
     res.status(201).json(products);
@@ -112,18 +126,27 @@ export async function getProducts(
   try {
 
      const cacheKey = `products:take=${take}:skip=${skip}`;
+    let products;
 
-    // 1️⃣ Check Redis cache
-    const cached = await redis.get(cacheKey);
-    if (cached) {
-      return res.json({ source: "cache", data: JSON.parse(cached) });
+    try {
+      const redisClient = await redisManager.getClient();
+      
+      // 1️⃣ Check Redis cache
+      const cached = await redisClient.get(cacheKey);
+      if (cached) {
+        return res.json({ source: "cache", data: JSON.parse(cached) });
+      }
+
+      // 2️⃣ Fetch from DB
+      products = await productService.getProducts(Number(take), Number(skip));
+
+      // 3️⃣ Store in cache for 1 hour
+      await redisClient.setex(cacheKey, 3600, JSON.stringify(products));
+    } catch (redisError) {
+      console.error("Redis error:", redisError);
+      // If Redis fails, just get from DB
+      products = await productService.getProducts(Number(take), Number(skip));
     }
-
-    // 2️⃣ Fetch from DB
-    const products = await productService.getProducts(Number(take), Number(skip));
-
-    // 3️⃣ Store in cache for 1 hour
-    await redis.setex(cacheKey, 3600, JSON.stringify(products));
 
     res.json({ source: "db", data: products });
   } catch (error) {
@@ -138,18 +161,34 @@ export const filterProducts = async (req: Request, res: Response, next: NextFunc
     // ✅ Build cache key safely (ignore undefined/null)
     const filters = { category,ageGroup,gender, brand, price, stock, createdAt, isActive, take, skip,sortBy,sortOrder };
     const cacheKey = `products:filter:${JSON.stringify(filters)}`;
+    let products, total;
 
-    // 1️⃣ Try cache
-    const cached = await redis.get(cacheKey);
-    if (cached) {
-      const parsed = JSON.parse(cached);
-      return res.json({ source: "cache", ...parsed });
+    try {
+      const redisClient = await redisManager.getClient();
+      
+      // 1️⃣ Try cache
+      const cached = await redisClient.get(cacheKey);
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        return res.json({ source: "cache", ...parsed });
+      }
+      
+      // 2️⃣ Fetch from DB if not in cache
+      [products, total] = await productService.filterProducts({ 
+        category, ageGroup, gender, brand, price, stock, 
+        createdAt, isActive, take, skip, sortBy, sortOrder 
+      });
+      
+      // 3️⃣ Store in cache for 1 hour
+      await redisClient.setex(cacheKey, 3600, JSON.stringify({products, total}));
+    } catch (redisError) {
+      console.error("Redis error:", redisError);
+      // If Redis fails, just get from DB
+      [products, total] = await productService.filterProducts({ 
+        category, ageGroup, gender, brand, price, stock, 
+        createdAt, isActive, take, skip, sortBy, sortOrder 
+      });
     }
-    const [products, total]:any = await productService.filterProducts({ category,ageGroup,gender, brand, price, stock, createdAt, isActive, take, skip,sortBy,sortOrder })
-    console.log(products);
-    console.log(total);
-    
-    await redis.setex(cacheKey, 3600, JSON.stringify({products}));
     res.json({
       source: "db",
       data: products,
