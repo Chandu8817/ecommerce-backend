@@ -1,7 +1,7 @@
 // controllers/payment.controller.ts
 import { Response,NextFunction } from "express";
 
-import { AuthRequest } from "../middleware/auth";
+import { AuthRequest } from "../middlewares/auth";
 import * as paymentService from "../services/payment.service";
 import { Cart } from "../models/Cart";
 

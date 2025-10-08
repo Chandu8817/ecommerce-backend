@@ -1,5 +1,5 @@
 import * as cartService from "../services/cart.service";
-import { AuthRequest } from "../middleware/auth";
+import { AuthRequest } from "../middlewares/auth";
 import { Response, Request, NextFunction } from "express";
 import { AppError } from "../utils/AppError";
 import { Types } from "mongoose";

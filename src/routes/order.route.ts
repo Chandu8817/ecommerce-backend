@@ -3,7 +3,7 @@ import { getOrderById, getOrders, createOrder,
     filterOrders,getMonthlySalesReport, getSalesByProducts, getTotalSales,
     updateOrderStatus,cancelOrder,getOrdersByUser,getOrdersByStatus
  } from "../controllers/order.controller";
-import { authMiddleware } from "../middleware/auth";
+import { authMiddleware } from "../middlewares/auth";
 
 
 const router = Router();

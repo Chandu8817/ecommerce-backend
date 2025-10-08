@@ -3,7 +3,7 @@
 import { Response, Request, NextFunction } from "express";
 import * as productService from "../services/product.service";
 import * as authService from "../services/auth.service";
-import { AuthRequest } from "../middleware/auth";
+import { AuthRequest } from "../middlewares/auth";
 import { IProduct } from "../models/Product";
 import { Types } from "mongoose";
 import { redisManager } from '../config/redisClient';
@@ -13,6 +13,8 @@ export async function addProduct(
   res: Response,
   next: NextFunction
 ) {
+
+
 
   const {
     name,
@@ -34,6 +36,7 @@ export async function addProduct(
     if (user.role != "admin") {
       return res.status(401).json({ error: "User not have this role" });
     }
+
 
     const product = await productService.addProduct({
       name,
@@ -214,6 +217,71 @@ export const updateProduct = async (req: AuthRequest, res: Response, next: NextF
     const { name, description, price, category, brand, stock, images, isActive } = req.body;
     const product = await productService.updateProduct(id, { name, description, price, category, brand, stock, images, isActive });
     res.json(product);
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const updateProducts = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const { ids } = req.body;
+    if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+    const user = await authService.getAuthUser(req.user.id);
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+    if (user.role != "admin") {
+      return res.status(401).json({ error: "User not have this role" });
+    }
+    const { name, description, price, category, brand, stock, images, isActive } = req.body;
+    const products = await productService.updateProducts(ids, { name, description, price, category, brand, stock, images, isActive });
+    res.json(products);
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const getTotalCount = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const count = await productService.getTotalCount();
+    res.json(count);
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const deleteProduct = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const { id } = req.params;
+    if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+    const user = await authService.getAuthUser(req.user.id);
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+    if (user.role != "admin") {
+      return res.status(401).json({ error: "User not have this role" });
+    }
+    const product = await productService.deleteProduct(id);
+    res.json(product);
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const deleteProducts = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const  {ids}  = req.body;
+    console.log(ids);
+    if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+    const user = await authService.getAuthUser(req.user.id);
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+    if (user.role != "admin") {
+      return res.status(401).json({ error: "User not have this role" });
+    }
+    const products = await productService.deleteProducts(ids);
+    res.json(products);
   } catch (err) {
     next(err);
   }

@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+import mongoose, { Types } from "mongoose";
 import { IProduct, Product } from "../models/Product";
 import { AppError } from "../utils/AppError";
 
@@ -129,4 +129,35 @@ export const updateProduct = async (id: string, productInput: Partial<IProduct>)
     ]);
   }
   return product;
+};
+
+export const getTotalCount = async () => {
+  const count = await Product.countDocuments();
+  return count;
+};
+
+export const updateProducts = async (ids: string[], productInput: Partial<IProduct>) => {
+  const products = await Product.updateMany({ _id: { $in: ids } }, productInput);
+  return products;
+};
+
+export const deleteProduct = async (id: string) => {
+  const product = await Product.findByIdAndDelete(id);
+  if (!product) {
+    throw new AppError("RESOURCE_NOT_FOUND", "Product not found", 404, [
+      { field: "productId", issue: "Does not exist in database" },
+    ]);
+  }
+  return product;
+};
+
+export const deleteProducts = async (ids: string[]) => {
+  if (!ids || ids.length === 0) {
+    throw new AppError("RESOURCE_NOT_FOUND", "Product not found", 404, [
+      { field: "productId", issue: "Does not exist in database" },
+    ]);
+  }
+  const product_ids = ids.map(id => new Types.ObjectId(id));
+  const products = await Product.deleteMany({ _id: { $in: product_ids } });
+  return products;
 };

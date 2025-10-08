@@ -10,7 +10,7 @@ import {
     getActiveBanners,
     validateBanner
 } from "../controllers/banner.controller";
-import { authMiddleware } from "../middleware/auth";
+import { authMiddleware } from "../middlewares/auth";
 import { BannerType, BannerPosition } from "../models/Banner";
 
 const router = Router();

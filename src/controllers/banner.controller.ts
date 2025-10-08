@@ -1,6 +1,6 @@
 import * as bannerService from "../services/banner.service";
 import { Response, Request, NextFunction } from "express";
-import { AuthRequest } from "../middleware/auth";
+import { AuthRequest } from "../middlewares/auth";
 import { AppError } from "../utils/AppError";
 import { Types } from "mongoose";
 import { BannerType, BannerPosition } from "../models/Banner";

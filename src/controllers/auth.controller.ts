@@ -4,7 +4,7 @@ import * as authService from "../services/auth.service";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv"
 import { Response, Request, NextFunction } from "express";
-import { AuthRequest } from "../middleware/auth";
+import { AuthRequest } from "../middlewares/auth";
 import { AppError } from "../utils/AppError";
 
 dotenv.config()

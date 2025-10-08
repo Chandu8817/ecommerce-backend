@@ -1,4 +1,4 @@
-import { AuthRequest } from "../middleware/auth";
+import { AuthRequest } from "../middlewares/auth";
 import * as categoryService from "../services/category.service";
 import { Request, Response, NextFunction } from "express";
 

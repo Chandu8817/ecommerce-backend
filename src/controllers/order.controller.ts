@@ -1,6 +1,6 @@
 import * as orderService from "../services/order.service";
 import { Response, Request, NextFunction } from "express";
-import { AuthRequest } from "../middleware/auth";
+import { AuthRequest } from "../middlewares/auth";
 import { AppError } from "../utils/AppError";
 import { create } from "domain";
 import { Types } from "mongoose";

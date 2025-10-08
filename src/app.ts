@@ -2,18 +2,13 @@ import express from "express"
 import cors from "cors"
 import morgan from "morgan"
 
-import { errorHandler } from "./middleware/errorHandler";
+import { errorHandler } from "./middlewares/errorHandler";
 
 import dotenv from "dotenv"
-import authRoutes from "./routes/auth.routes";
-import productRoutes from "./routes/product.route";
-import orderRoutes from "./routes/order.route"
-import bannerRoutes from "./routes/banner.routes"
-import wishlistRoutes from "./routes/wishlist.route";
-import cartRoutes from "./routes/cart.route";
-import reviewRoutes from "./routes/review.route"
-import categoryRoutes from "./routes/category.routes"
-import paymentRoutes from "./routes/payment.route"
+import { authRoutes, productRoutes, orderRoutes, bannerRoutes, cartRoutes, categoryRoutes,
+     paymentRoutes, reviewRoutes, wishlistRoutes, uploadRoutes } from "./routes";
+import path from "path";
+
 
 dotenv.config()
 
@@ -25,7 +20,7 @@ app.use(cors())
 app.use(morgan("dev"))
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }));
-
+app.use(errorHandler);
 app.use("/api/auth", authRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/order", orderRoutes);
@@ -35,7 +30,9 @@ app.use("/api/cart", cartRoutes);
 app.use("/api/reviews", reviewRoutes);
 app.use("/api/categories", categoryRoutes);
 app.use("/api/payment", paymentRoutes);
-app.use(errorHandler);
+app.use("/api/uploads", uploadRoutes);
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+
 
 
 

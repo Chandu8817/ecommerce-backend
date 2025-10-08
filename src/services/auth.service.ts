@@ -3,11 +3,11 @@ import { AppError } from "../utils/AppError";
 
 export const register = async (userInput: Partial<IUser>) => {
 
-    const { name, email, password ,role} = userInput;
-    
+    const { email } = userInput;
+
     const exists = await User.findOne({ email });
-   if (exists) throw new Error("User already exists");
-    const user = await User.create({ name, email, password,role });
+    if (exists) throw new Error("User already exists");
+    const user = await User.create(userInput);
     return user;
 
 
@@ -20,12 +20,12 @@ export const login = async (userInput: Partial<IUser>) => {
     if (user && (await user.matchPassword(password as string))) {
         return user
     } else {
-         throw new AppError(
-                "INVALID CREDIENTAILS",
-                "Invalid credientails",
-                404,
-                [{ field: "userId", issue: "Does not exist in database" }]
-              );
+        throw new AppError(
+            "INVALID CREDIENTAILS",
+            "Invalid credientails",
+            404,
+            [{ field: "userId", issue: "Does not exist in database" }]
+        );
     }
 
 
@@ -34,7 +34,7 @@ export const login = async (userInput: Partial<IUser>) => {
 }
 
 
-export const  getAuthUser = async (_id :string)=>{
+export const getAuthUser = async (_id: string) => {
 
     const user = await User.findById(_id);
     return user
@@ -42,7 +42,7 @@ export const  getAuthUser = async (_id :string)=>{
 
 }
 
-export const addShippingAddress = async (_id :string,shippingAddress:IShippingAddress)=>{
+export const addShippingAddress = async (_id: string, shippingAddress: IShippingAddress) => {
 
     const user = await User.findById(_id);
     if (!user) throw new Error("User not found");
@@ -52,19 +52,19 @@ export const addShippingAddress = async (_id :string,shippingAddress:IShippingAd
 
 }
 
-export const removeShippingAddress = async (_id :string,id:number)=>{
+export const removeShippingAddress = async (_id: string, id: number) => {
 
     const user = await User.findById(_id);
     if (!user) throw new Error("User not found");
     const addresses = user.shippingAddress;
-    addresses.splice(id,1);
+    addresses.splice(id, 1);
     user.shippingAddress = addresses;
     await user.save();
     return user
 
 }
 
-export const getShippingAddress = async (_id :string)=>{
+export const getShippingAddress = async (_id: string) => {
 
     const user = await User.findById(_id);
     if (!user) throw new Error("User not found");
