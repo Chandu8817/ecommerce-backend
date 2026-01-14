@@ -4,6 +4,7 @@ import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import { JWT_REFRESH_SECRET } from "../config/env";
 import { AppError } from "../utils/AppError";
+import { AuthRequest } from "./auth";
 
 export function generateRefreshToken(id: string) {
   return jwt.sign({ id }, JWT_REFRESH_SECRET, { expiresIn: "30d" });
@@ -17,13 +18,14 @@ export function verifyRefreshToken(token: string) {
   }
 }
 
-export const requireRefreshToken = (req: Request, res: Response, next: NextFunction) => {
+export const requireRefreshToken = (req: AuthRequest, res: Response, next: NextFunction) => {
   const token = req.body.refreshToken || req.cookies.refreshToken;
   if (!token) {
     return next(new AppError("UNAUTHORIZED", "Refresh token required", 401));
   }
   try {
-    req.user = verifyRefreshToken(token);
+    const decoded = verifyRefreshToken(token);
+    req.user = typeof decoded === 'string' ? JSON.parse(decoded) : decoded;
     next();
   } catch (err) {
     next(err);

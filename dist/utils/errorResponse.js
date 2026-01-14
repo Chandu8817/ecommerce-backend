@@ -1,0 +1,45 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.errorCode = void 0;
+exports.errorResponse = errorResponse;
+// utils/errorResponse.ts
+const crypto_1 = require("crypto");
+function errorResponse(code, message, details = [], requestId = (0, crypto_1.randomUUID)()) {
+    return {
+        error: {
+            code,
+            message,
+            details,
+            requestId,
+        },
+    };
+}
+exports.errorCode = {
+    // Generic
+    VALIDATION_ERROR: "VALIDATION_ERROR",
+    UNAUTHORIZED: "UNAUTHORIZED",
+    FORBIDDEN: "FORBIDDEN",
+    RESOURCE_NOT_FOUND: "RESOURCE_NOT_FOUND",
+    INTERNAL_SERVER_ERROR: "INTERNAL_SERVER_ERROR",
+    CONFLICT: "CONFLICT",
+    RATE_LIMIT_EXCEEDED: "RATE_LIMIT_EXCEEDED",
+    // User related
+    USER_NOT_FOUND: "USER_NOT_FOUND",
+    USER_ALREADY_EXISTS: "USER_ALREADY_EXISTS",
+    USER_INVALID_CREDENTIALS: "USER_INVALID_CREDENTIALS",
+    USER_INACTIVE: "USER_INACTIVE",
+    USER_UNAUTHORIZED_ACTION: "USER_UNAUTHORIZED_ACTION",
+    // Product related
+    PRODUCT_NOT_FOUND: "PRODUCT_NOT_FOUND",
+    PRODUCT_OUT_OF_STOCK: "PRODUCT_OUT_OF_STOCK",
+    PRODUCT_ALREADY_EXISTS: "PRODUCT_ALREADY_EXISTS",
+    PRODUCT_INACTIVE: "PRODUCT_INACTIVE",
+    PRODUCT_VALIDATION_FAILED: "PRODUCT_VALIDATION_FAILED",
+    // Order related
+    ORDER_NOT_FOUND: "ORDER_NOT_FOUND",
+    ORDER_ALREADY_EXISTS: "ORDER_ALREADY_EXISTS",
+    ORDER_PAYMENT_FAILED: "ORDER_PAYMENT_FAILED",
+    ORDER_INVALID_STATUS: "ORDER_INVALID_STATUS",
+    ORDER_NOT_ELIGIBLE_FOR_CANCEL: "ORDER_NOT_ELIGIBLE_FOR_CANCEL",
+    ORDER_STOCK_NOT_AVAILABLE: "ORDER_STOCK_NOT_AVAILABLE",
+};

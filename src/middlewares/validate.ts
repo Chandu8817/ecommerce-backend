@@ -1,7 +1,8 @@
 // validate.ts
 // Input validation middleware using Joi
 import { Request, Response, NextFunction } from "express";
-import Joi, { ObjectSchema } from "joi";
+import { ObjectSchema } from "joi";
+
 import { AppError } from "../utils/AppError";
 
 export function validateBody(schema: ObjectSchema) {
