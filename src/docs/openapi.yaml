@@ -1,0 +1,59 @@
+# OpenAPI/Swagger documentation entry point
+openapi: 3.0.0
+info:
+  title: E-commerce Backend API
+  version: 1.0.0
+  description: API documentation for the single-brand e-commerce backend
+servers:
+  - url: /api/v1
+paths:
+  /health:
+    get:
+      summary: Health check endpoint
+      responses:
+        '200':
+          description: OK
+  /auth/register:
+    post:
+      summary: Register a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                email:
+                  type: string
+                password:
+                  type: string
+                role:
+                  type: string
+                  enum: [user, admin]
+      responses:
+        '201':
+          description: User registered
+        '409':
+          description: User already exists
+  /auth/login:
+    post:
+      summary: Login user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Login successful
+        '401':
+          description: Invalid credentials
+  # Add more endpoints for products, orders, cart, etc. as you refactor
