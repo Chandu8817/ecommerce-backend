@@ -17,13 +17,7 @@ const app = express()
 
 const allowedOrigins = [
   process.env.FRONTEND_URL,
-  "https://rawbharat.com",
-  "https://admin.rawbharat.com",
-  "http://localhost:3000",
-  "http://localhost:5173",
-  "http://localhost:8080"
-
-
+  "https://www.rawbharat.shop"
 ];
 
 app.use(
