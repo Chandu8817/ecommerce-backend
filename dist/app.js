@@ -48,7 +48,10 @@ const app = (0, express_1.default)();
 // Middleware
 const allowedOrigins = [
     process.env.FRONTEND_URL,
-    "https://www.rawbharat.shop"
+    "https://www.rawbharat.shop",
+    "https://graceful-dolphin-9330e7.netlify.app",
+    "http://localhost:8080",
+    "http://localhost:5173",
 ];
 app.use((0, cors_1.default)({
     origin: function (origin, callback) {
