@@ -48,11 +48,7 @@ const app = (0, express_1.default)();
 // Middleware
 const allowedOrigins = [
     process.env.FRONTEND_URL,
-    "https://rawbharat.com",
-    "https://admin.rawbharat.com",
-    "http://localhost:3000",
-    "http://localhost:5173",
-    "http://localhost:8080"
+    "https://www.rawbharat.shop"
 ];
 app.use((0, cors_1.default)({
     origin: function (origin, callback) {
