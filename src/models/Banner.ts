@@ -21,25 +21,26 @@ export interface IBanner extends mongoose.Document {
     updatedAt: Date;
 }
 
-const bannerSchema = new Schema<IBanner>({
-    title: { type: String, required: true, trim: true },
-    subtitle: { type: String, trim: true },
-    description: { type: String, trim: true },
-    imageUrl: { type: String, required: true },
-    mobileImageUrl: { type: String },
-    linkUrl: { type: String },
-    buttonText: { type: String, default: 'Shop Now' },
-    offer: { type: String },
-    coupon: { type: String },
-    
-   
-    startDate: { type: Date },
-    endDate: { type: Date },
-    isActive: { type: Boolean, default: true },
-    createdBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-    updatedBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-    createdAt: { type: Date, default: Date.now },
-    updatedAt: { type: Date, default: Date.now }
-})
-bannerSchema.index({isActive:1,createdAt:-1});
+const bannerSchema = new Schema<IBanner>(
+    {
+        title: { type: String, required: true, trim: true },
+        subtitle: { type: String, trim: true },
+        description: { type: String, trim: true },
+        imageUrl: { type: String, required: true },
+        mobileImageUrl: { type: String, trim: true },
+        linkUrl: { type: String, trim: true },
+        buttonText: { type: String, default: 'Shop Now', trim: true },
+        offer: { type: String, trim: true },
+        coupon: { type: String, trim: true },
+        startDate: { type: Date },
+        endDate: { type: Date },
+        isActive: { type: Boolean, default: true, index: true },
+        createdBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+        updatedBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    },
+    { timestamps: true }
+);
+
+bannerSchema.index({ isActive: 1, createdAt: -1 });
+bannerSchema.index({ createdBy: 1 });
 export const Banner = model<IBanner>("Banner",bannerSchema);

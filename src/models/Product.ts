@@ -1,12 +1,12 @@
 import mongoose, { Schema, Document, model, Types } from "mongoose";
-import { Category } from "./Category";
+import { Category , ICategory } from "./Category";
 import { features } from "process";
  type Gender ="male"|"female" | "other"
 export interface IProduct extends Document {
   name: string;
   description: string;
   price: number;
-  category: string;
+  category: ICategory;
   sku?: string;
   brand?: string;
   stock: number;
@@ -26,7 +26,7 @@ const productSchema = new Schema<IProduct>(
     name: { type: String, required: true, trim: true },
     description: { type: String, required: true },
     price: { type: Number, required: true, min: 0 },
-    category: { type: String, required: true, index: true },
+    category: { type: Schema.Types.ObjectId, ref: "Category", required: true, index: true },
     sku: { type: String, unique: true, sparse: true },
     brand: { type: String },
     stock: { type: Number, required: true, min: 0 },

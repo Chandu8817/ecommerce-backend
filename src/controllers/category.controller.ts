@@ -6,7 +6,7 @@ import { Request, Response, NextFunction } from "express";
 export const createCategory = async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
         if(!req.user) return res.status(401).json({error:"Unauthorized"});
-           
+           console.log("Creating category", req.body);
         const category = await categoryService.createCategory(req.body,req.user.id);
         res.status(201).json(category);
     } catch (error) {
