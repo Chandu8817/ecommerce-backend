@@ -39,6 +39,7 @@ const createCategory = async (req, res, next) => {
     try {
         if (!req.user)
             return res.status(401).json({ error: "Unauthorized" });
+        console.log("Creating category", req.body);
         const category = await categoryService.createCategory(req.body, req.user.id);
         res.status(201).json(category);
     }
