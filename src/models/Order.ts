@@ -13,7 +13,7 @@ export interface IShippingAddress {
 }
 
 export type OrderStatus = "pending" | "processing" | "shipped" | "delivered" | "cancelled" | "return" | "refunded";
-export type PaymentStatus = "pending" | "paid" | "failed";
+export type PaymentStatus = "pending" | "paid" | "failed" | "refunded" | "refund_failed";
 export interface IOrder extends mongoose.Document {
     user: mongoose.Types.ObjectId; // Reference to User
     products: { product: mongoose.Types.ObjectId; quantity: number }[]; // Array of products with quantities
@@ -22,11 +22,13 @@ export interface IOrder extends mongoose.Document {
     paymentStatus: PaymentStatus;
     paymentId: string;
     orderId: string;
+    refundId: string;
     shippingAddress: {
         type: Object,
         required: true
     },
     shippingProvider: { type: String, default: "shiprocket" },
+
 shippingOrderId: String,
 awbCode: String,
 courierName: String,
@@ -62,9 +64,10 @@ const orderSchema = new Schema<IOrder>({
     }],
     totalAmount: { type: Number, required: true, min: 0 },
     status: { type: String, enum: ["pending", "processing", "shipped", "delivered", "cancelled", "return", "refunded"], default: "pending" },
-    paymentStatus: { type: String, enum: ["pending", "paid", "failed"], default: "pending" },
+    paymentStatus: { type: String, enum: ["pending", "paid", "failed","refunded", "refund_failed"], default: "pending" },
     paymentId: { type: String, index: true },
     orderId: { type: String, index: true },
+    refundId: { type: String, index: true },
    shippingAddress: {
     type: shippingAddressSchema,
     required: true

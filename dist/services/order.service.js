@@ -5,6 +5,7 @@ const Order_1 = require("../models/Order");
 const Product_1 = require("../models/Product");
 const User_1 = require("../models/User");
 const AppError_1 = require("../utils/AppError");
+const razorpay_1 = require("../utils/razorpay");
 const SHIPPING_STATES = [
     "Madhya Pradesh",
     "Uttar Pradesh",
@@ -99,12 +100,32 @@ const cancelOrder = async (id, userId) => {
         throw new Error("Order not found");
     }
     if (order.user.toString() !== userId) {
-        throw new AppError_1.AppError("FORBIDDEN", "You can only cancel your own orders", 403, [
-            { field: "userId", issue: "Forbidden" },
-        ]);
+        throw new AppError_1.AppError("FORBIDDEN", "You can only cancel your own orders", 403, [{ field: "userId", issue: "Forbidden" }]);
     }
-    if (order.status === "shipped" || order.status === "delivered") {
-        throw new Error("Cannot cancel order that is already shipped or delivered");
+    if (["shipped", "delivered"].includes(order.status)) {
+        throw new Error("Cannot cancel shipped or delivered order");
+    }
+    // 🔁 Refund logic
+    if (order.status === "pending" &&
+        order.paymentStatus === "paid" &&
+        order.paymentMethod === "razorpay" &&
+        order.paymentId) {
+        try {
+            const refund = await razorpay_1.razorpay.payments.refund(order.paymentId, {
+                amount: order.totalAmount * 100, // ₹ → paise
+                speed: "optimum",
+                notes: {
+                    reason: "Order cancelled by user",
+                    orderId: id.toString(),
+                },
+            });
+            order.paymentStatus = "refunded";
+            order.refundId = refund.id; // add this field in schema
+        }
+        catch (error) {
+            console.error("Razorpay refund error:", error);
+            throw new Error("Refund failed. Please try again later.");
+        }
     }
     order.status = "cancelled";
     order.updatedAt = new Date();

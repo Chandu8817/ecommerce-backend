@@ -16,9 +16,10 @@ router.get("/monthly-sales", authMiddleware, getMonthlySalesReport);
 router.post("/filter", authMiddleware, filterOrders);
 router.get("/:id", authMiddleware, getOrderById);
 router.patch("/:id/status", authMiddleware, updateOrderStatus);
-router.patch("/:id/cancel", authMiddleware, cancelOrder);
+router.put("/:id/cancel", authMiddleware, cancelOrder);
 router.get("/user/:userId", authMiddleware, getOrdersByUser);
 router.get("/status/:status", authMiddleware, getOrdersByStatus);
+
 export default router;
 
 

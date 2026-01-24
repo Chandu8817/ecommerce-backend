@@ -12,7 +12,7 @@ router.get("/monthly-sales", auth_1.authMiddleware, order_controller_1.getMonthl
 router.post("/filter", auth_1.authMiddleware, order_controller_1.filterOrders);
 router.get("/:id", auth_1.authMiddleware, order_controller_1.getOrderById);
 router.patch("/:id/status", auth_1.authMiddleware, order_controller_1.updateOrderStatus);
-router.patch("/:id/cancel", auth_1.authMiddleware, order_controller_1.cancelOrder);
+router.put("/:id/cancel", auth_1.authMiddleware, order_controller_1.cancelOrder);
 router.get("/user/:userId", auth_1.authMiddleware, order_controller_1.getOrdersByUser);
 router.get("/status/:status", auth_1.authMiddleware, order_controller_1.getOrdersByStatus);
 exports.default = router;

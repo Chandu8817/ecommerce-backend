@@ -43,6 +43,8 @@ const errorHandler_1 = require("./middlewares/errorHandler");
 const response_1 = require("./utils/response");
 const dotenv_1 = __importDefault(require("dotenv"));
 const v1Routes = __importStar(require("./routes/v1"));
+const body_parser_1 = __importDefault(require("body-parser"));
+const razorpayWebhook_1 = require("./services/razorpayWebhook");
 dotenv_1.default.config();
 const app = (0, express_1.default)();
 // Middleware
@@ -67,6 +69,8 @@ app.use((0, cors_1.default)({
     },
     credentials: true,
 }));
+// razarpay webhook handler
+app.post("/api/v1/webhooks/razorpay", body_parser_1.default.raw({ type: "*/*" }), razorpayWebhook_1.razorpayWebhook);
 app.use((0, morgan_1.default)("dev"));
 app.use(express_1.default.json());
 app.use(express_1.default.urlencoded({ extended: true }));

@@ -7,6 +7,9 @@ import { success } from "./utils/response";
 
 import dotenv from "dotenv"
 import * as v1Routes from "./routes/v1";
+import bodyParser from "body-parser";
+import { razorpayWebhook } from "./services/razorpayWebhook";
+
 
 
 dotenv.config()
@@ -38,9 +41,17 @@ app.use(
     credentials: true,
   })
 );
+// razarpay webhook handler
+app.post(
+  "/api/v1/webhooks/razorpay",
+  bodyParser.raw({ type: "*/*" }),
+  razorpayWebhook
+);
+
 app.use(morgan("dev"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
 
 // API Versioning: All routes under /api/v1
 app.use("/api/v1/auth", v1Routes.authRoutes);
