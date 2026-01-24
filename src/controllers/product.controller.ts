@@ -14,11 +14,9 @@ export async function addProduct(
   res: Response,
   next: NextFunction
 ) {
-console.log("addProduct called");
-console.log(req.body);
-  const { name, description, price, category,sku, brand, stock, isActive,isNFT,sizes } = req.body;
-  console.log(name,description
-  );
+  console.log("addProduct called");
+  console.log(req.body);
+  
   try {
     if (!req.user) return res.status(401).json({ error: "Unauthorized" });
     const user = await authService.getAuthUser(req.user.id);
@@ -31,20 +29,45 @@ console.log(req.body);
       imageUrls = await uploadFilesToS3(req.files as Express.Multer.File[]);
     }
 
-    const product = await productService.addProduct({
-      name,
-      description,
-      price,
-      category,
-      sku,
-      brand,
-      stock,
+    // Parse JSON strings from FormData
+    const parseJSON = (value: any) => {
+      if (typeof value === 'string') {
+        try {
+          return JSON.parse(value);
+        } catch {
+          return value;
+        }
+      }
+      return value;
+    };
+
+    const productData: Partial<IProduct> = {
+      name: req.body.name,
+      description: req.body.description,
+      price: Number(req.body.price),
+      category: parseJSON(req.body.category),
+      sku: req.body.sku,
+      brand: req.body.brand,
+      material: req.body.material,
+      stock: Number(req.body.stock),
       images: imageUrls,
-      isActive,
-      isNFT: isNFT,
-      sizes: sizes,
+      isActive: req.body.isActive === 'true',
+      ageGroup: req.body.ageGroup,
+      gender: req.body.gender,
+      featured: req.body.featured === 'true',
+      isNFT: req.body.isNFT === 'true',
+      sizes: parseJSON(req.body.sizes),
+      features: parseJSON(req.body.features),
+      colors: parseJSON(req.body.colors),
+      highlights: parseJSON(req.body.highlights),
       createdBy: new Types.ObjectId(user._id),
-    });
+    };
+
+    // Add optional numeric fields
+    if (req.body.originalPrice) productData.originalPrice = Number(req.body.originalPrice);
+    if (req.body.discount) productData.discount = Number(req.body.discount);
+
+    const product = await productService.addProduct(productData);
 
     // Clear Redis cache
     // try {

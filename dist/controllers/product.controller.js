@@ -47,8 +47,6 @@ const s3Helpers_1 = require("../utils/s3Helpers");
 async function addProduct(req, res, next) {
     console.log("addProduct called");
     console.log(req.body);
-    const { name, description, price, category, sku, brand, stock, isActive, isNFT, sizes } = req.body;
-    console.log(name, description);
     try {
         if (!req.user)
             return res.status(401).json({ error: "Unauthorized" });
@@ -62,20 +60,45 @@ async function addProduct(req, res, next) {
         if (req.files && req.files.length > 0) {
             imageUrls = await (0, s3Helpers_1.uploadFilesToS3)(req.files);
         }
-        const product = await productService.addProduct({
-            name,
-            description,
-            price,
-            category,
-            sku,
-            brand,
-            stock,
+        // Parse JSON strings from FormData
+        const parseJSON = (value) => {
+            if (typeof value === 'string') {
+                try {
+                    return JSON.parse(value);
+                }
+                catch {
+                    return value;
+                }
+            }
+            return value;
+        };
+        const productData = {
+            name: req.body.name,
+            description: req.body.description,
+            price: Number(req.body.price),
+            category: parseJSON(req.body.category),
+            sku: req.body.sku,
+            brand: req.body.brand,
+            material: req.body.material,
+            stock: Number(req.body.stock),
             images: imageUrls,
-            isActive,
-            isNFT: isNFT,
-            sizes: sizes,
+            isActive: req.body.isActive === 'true',
+            ageGroup: req.body.ageGroup,
+            gender: req.body.gender,
+            featured: req.body.featured === 'true',
+            isNFT: req.body.isNFT === 'true',
+            sizes: parseJSON(req.body.sizes),
+            features: parseJSON(req.body.features),
+            colors: parseJSON(req.body.colors),
+            highlights: parseJSON(req.body.highlights),
             createdBy: new mongoose_1.Types.ObjectId(user._id),
-        });
+        };
+        // Add optional numeric fields
+        if (req.body.originalPrice)
+            productData.originalPrice = Number(req.body.originalPrice);
+        if (req.body.discount)
+            productData.discount = Number(req.body.discount);
+        const product = await productService.addProduct(productData);
         // Clear Redis cache
         // try {
         //   const redisClient = await redisManager.getClient();
