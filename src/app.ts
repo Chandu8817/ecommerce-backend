@@ -21,6 +21,7 @@ const app = express()
 const allowedOrigins = [
   process.env.FRONTEND_URL,
   "https://www.rawbharat.shop",
+  "https://rawbharat.shop/",
   "https://store-manager-rawbharat.netlify.app",
   "http://localhost:8080",
   "http://localhost:5173",
