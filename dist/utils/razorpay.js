@@ -7,6 +7,7 @@ exports.razorpay = void 0;
 const razorpay_1 = __importDefault(require("razorpay"));
 const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
+console.log("ACTIVE KEY:", process.env.RAZORPAY_KEY_ID);
 exports.razorpay = new razorpay_1.default({
     key_id: process.env.RAZORPAY_KEY_ID,
     key_secret: process.env.RAZORPAY_SECRET,
