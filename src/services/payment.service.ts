@@ -4,7 +4,9 @@ import { IOrder, Order } from "../models/Order";
 import { razorpay } from "../utils/razorpay";
 import { AppError } from "../utils/AppError";
 import { createShipment } from "./shiprocket.service";
+import dotenv from "dotenv";
 
+dotenv.config();
 interface IPaymentInput {
   amount: number;
   currency?: string;

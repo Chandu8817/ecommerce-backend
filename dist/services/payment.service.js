@@ -9,6 +9,8 @@ const crypto_1 = __importDefault(require("crypto"));
 const Order_1 = require("../models/Order");
 const razorpay_1 = require("../utils/razorpay");
 const AppError_1 = require("../utils/AppError");
+const dotenv_1 = __importDefault(require("dotenv"));
+dotenv_1.default.config();
 const createPaymentOrder = async ({ amount, currency = 'INR' }) => {
     const options = {
         amount, // already in paise
