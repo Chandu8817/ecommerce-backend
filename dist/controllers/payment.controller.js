@@ -45,6 +45,7 @@ const createPaymentOrder = async (req, res, next) => {
         const order = await paymentService.createPaymentOrder({
             amount
         });
+        console.log("✅ PAYMENT ORDER CREATED:", order);
         res.json(order);
     }
     catch (error) {

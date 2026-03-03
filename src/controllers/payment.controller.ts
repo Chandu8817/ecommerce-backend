@@ -21,6 +21,7 @@ export const createPaymentOrder = async (
     const order = await paymentService.createPaymentOrder({
       amount
     })
+    console.log("✅ PAYMENT ORDER CREATED:", order);
 
     res.json(order)
   } catch (error) {
