@@ -1,10 +1,10 @@
 import mongoose, { Schema, Document, model, Types } from "mongoose";
 
-type Gender = "male" | "female" | "other"
+type Gender = "Boys" | "Girls" | "Men" | "Women" | "Unisex" | "other";
 
 export interface IHighlight {
-  title: string;
-  description: string;
+  title?: string;
+  description?: string;
   image?: string;
 }
 
@@ -57,7 +57,11 @@ const productSchema = new Schema<IProduct>(
     ageGroup: { type: String, index: true },
     createdBy: { type: Schema.Types.ObjectId, ref: "User", required: true },
     updatedAt: { type: Date, default: Date.now },
-    gender: { type: String, enum: ["Boys", "Girls", "other"], default: "other" },
+    gender: {
+      type: String,
+      enum: ["Boys", "Girls", "Men", "Women", "Unisex", "other"],
+      default: "other",
+    },
     featured: { type: Boolean, default: false, index: true },
     isNFT: { type: Boolean, default: false, index: true },
     sizes: [{ type: String }],

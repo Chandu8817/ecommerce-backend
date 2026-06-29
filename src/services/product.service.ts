@@ -7,6 +7,12 @@ export const addProduct = async (productInput: Partial<IProduct>) => {
   return product;
 };
 export const addProducts = async (productsInput: Partial<IProduct>[]) => {
+  if (!Array.isArray(productsInput) || productsInput.length === 0) {
+    throw new AppError("INVALID_PRODUCT_BULK_PAYLOAD", "No products provided", 400, [
+      { field: "products", issue: "At least one product is required" },
+    ]);
+  }
+
   const products = await Product.insertMany(productsInput);
   return products;
 };

@@ -10,5 +10,4 @@ export { default as reviewRoutes } from "../review.route";
 export { default as categoryRoutes } from "../category.routes";
 export { default as paymentRoutes } from "../payment.route";
 export { default as uploadRoutes } from "../upload.routes";
-export { default as getImageRoutes } from "../getImage.routes";
 export { default as webhookRoutes } from "../webhook.routes";

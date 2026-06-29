@@ -66,7 +66,6 @@ app.use("/api/v1/reviews", v1Routes.reviewRoutes);
 app.use("/api/v1/categories", v1Routes.categoryRoutes);
 app.use("/api/v1/payment", v1Routes.paymentRoutes);
 app.use("/api/v1/uploads", v1Routes.uploadRoutes);
-app.use("/api/v1/images", v1Routes.getImageRoutes);
 app.use("/api/v1/webhook", v1Routes.webhookRoutes);
 
 // Health check endpoint
