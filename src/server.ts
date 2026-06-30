@@ -5,6 +5,7 @@ import { PORT, NODE_ENV } from "./config/env";
 
 connectDB();
 
+
 const server = app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT} [${NODE_ENV}]`);
 });
