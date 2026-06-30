@@ -16,11 +16,11 @@ export interface IUser extends Document {
     _id: string;
     name?: string;
     email?: string;
-    phone: string;
+    phone?: string;
+    googleId?: string;
+    picture?: string;
     password?: string;
     role: "user" | "admin";
-    otp?: string;
-    otpExpiresAt?: Date;
     shippingAddress: IShippingAddress[];
     matchPassword(enteredPassword: string): Promise<boolean>;
 }
@@ -33,10 +33,10 @@ const userSchema = new Schema<IUser>(
     {
         name: { type: String },
         email: { type: String, sparse: true, unique: true },
-        phone: { type: String, required: true, unique: true },
+        phone: { type: String, sparse: true, unique: true },
+        googleId: { type: String, sparse: true, unique: true },
+        picture: { type: String },
         password: { type: String },
-        otp: { type: String },
-        otpExpiresAt: { type: Date },
         role: { type: String, enum: ["user", "admin"], default: "user" },
         shippingAddress: { type: [{
             name: String,

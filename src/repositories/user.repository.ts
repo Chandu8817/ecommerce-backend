@@ -7,8 +7,8 @@ export class UserRepository {
     return User.findOne({ email });
   }
 
-  async findByPhone(phone: string): Promise<IUser | null> {
-    return User.findOne({ phone });
+  async findByGoogleId(googleId: string): Promise<IUser | null> {
+    return User.findOne({ googleId });
   }
 
   async create(userInput: Partial<IUser>): Promise<IUser> {

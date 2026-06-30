@@ -15,7 +15,6 @@
   "description": "",
   "dependencies": {
     "@types/multer": "^2.0.0",
-    "@types/nodemailer": "^7.0.4",
     "bcrypt": "^6.0.0",
     "body-parser": "^2.2.2",
     "cloudinary": "^2.10.0",
@@ -25,6 +24,7 @@
     "express-rate-limit": "^8.2.1",
     "express-validator": "^7.2.1",
     "firebase-admin": "^13.5.0",
+    "google-auth-library": "^10.9.0",
     "helmet": "^8.1.0",
     "ioredis": "^5.7.0",
     "joi": "^18.0.2",
@@ -33,10 +33,7 @@
     "morgan": "^1.10.1",
     "multer": "^2.0.2",
     "node-fetch": "^3.3.2",
-    "nodemailer": "^7.0.12",
     "razorpay": "^2.9.6",
-    "resend": "^6.16.0",
-    "twilio": "^5.11.2",
     "uuid": "^13.0.0",
     "winston": "^3.19.0"
   },

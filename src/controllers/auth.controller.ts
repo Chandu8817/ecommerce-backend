@@ -14,63 +14,35 @@ const generateToken = (id: string) => {
 };
 
 /**
- * Request OTP - Step 1 of OTP flow
- * User enters phone number (and email if using email OTP) to receive OTP
+ * Login / register with Google.
+ * Frontend obtains a Google ID token via Google Sign-In and sends it as `idToken`.
  */
-export const requestOTP = async (req: Request, res: Response, next: NextFunction) => {
+export const googleLogin = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const { phone, email ,role} = req.body;
-        
-        if (!phone) {
+        const { idToken, credential, role } = req.body;
+        // Google Identity Services returns the token as `credential`; accept either name.
+        const token = idToken || credential;
+
+        if (!token) {
             throw new AppError(
-                "MISSING_PHONE",
-                "Phone number is required",
+                "MISSING_ID_TOKEN",
+                "Google ID token is required",
                 400,
-                [{ field: "phone", issue: "Phone number cannot be empty" }]
+                [{ field: "idToken", issue: "idToken cannot be empty" }]
             );
         }
 
-        const result = await userService.requestOTP(phone, email, role);
-        
+        const user = await userService.loginWithGoogle(token, role);
+
         res.status(200).json({
             success: true,
-            message: result.message,
-            phone: result.phone,
-            email: result.email,
-            expiresIn: result.expiresIn,
-        });
-    } catch (err) {
-        next(err);
-    }
-};
-
-/**
- * Verify OTP & Login - Step 2 of OTP flow
- * User enters OTP to verify and get authenticated
- */
-export const verifyOTP = async (req: Request, res: Response, next: NextFunction) => {
-    try {
-        const { phone, otp } = req.body;
-        
-        if (!phone || !otp) {
-            throw new AppError(
-                "MISSING_FIELDS",
-                "Phone and OTP are required",
-                400,
-                [{ field: "phone/otp", issue: "Both phone and OTP must be provided" }]
-            );
-        }
-
-        const user = await userService.verifyOTP(phone, otp);
-        
-        res.status(200).json({
-            success: true,
-            message: "OTP verified successfully",
+            message: "Logged in with Google successfully",
             user: {
                 _id: user._id,
                 name: user.name,
                 email: user.email,
                 phone: user.phone,
+                picture: user.picture,
                 role: user.role,
             },
             accessToken: generateToken(user._id),

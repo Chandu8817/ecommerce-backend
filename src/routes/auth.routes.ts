@@ -1,12 +1,11 @@
 import { Router } from "express";
-import { requestOTP, verifyOTP, updateProfile, getAuthUser, addShippingAddress, getShippingAddress, removeShippingAddress } from "../controllers/auth.controller";
+import { googleLogin, updateProfile, getAuthUser, addShippingAddress, getShippingAddress, removeShippingAddress } from "../controllers/auth.controller";
 import { authMiddleware } from "../middlewares/auth";
 
 const router = Router()
 
-// OTP-based authentication (new flow)
-router.post("/request-otp", requestOTP);
-router.post("/verify-otp", verifyOTP);
+// Google Sign-In authentication
+router.post("/google", googleLogin);
 
 // User profile
 router.post("/update-profile", authMiddleware, updateProfile);

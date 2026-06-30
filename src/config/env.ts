@@ -13,22 +13,8 @@ export const CLOUDINARY_CLOUD_NAME = process.env.CLOUDINARY_CLOUD_NAME || '';
 export const CLOUDINARY_API_KEY = process.env.CLOUDINARY_API_KEY || '';
 export const CLOUDINARY_API_SECRET = process.env.CLOUDINARY_API_SECRET || '';
 export const CLOUDINARY_FOLDER = process.env.CLOUDINARY_FOLDER || 'ecommerce';
-export const TWILIO_ACCOUNT_SID = process.env.TWILIO_ACCOUNT_SID || '';
-export const TWILIO_AUTH_TOKEN = process.env.TWILIO_AUTH_TOKEN || '';
-export const TWILIO_FROM_NUMBER = process.env.TWILIO_FROM_NUMBER || '';
-
-// Email service configuration
-export const EMAIL_HOST = process.env.EMAIL_HOST || '';
-export const EMAIL_PORT = parseInt(process.env.EMAIL_PORT || '587');
-export const EMAIL_USER = process.env.EMAIL_USER || '';
-export const EMAIL_PASSWORD = process.env.EMAIL_PASSWORD || '';
-export const EMAIL_FROM = process.env.EMAIL_FROM || 'noreply@rawbharat.shop';
-
-// Resend HTTP email API (works on hosts that block outbound SMTP, e.g. Render free tier)
-export const RESEND_API_KEY = process.env.RESEND_API_KEY || '';
-
-// OTP Configuration - set to 'false' to use email, 'true' to use phone/SMS
-export const OTP_VIA_PHONE = process.env.OTP_VIA_PHONE === 'true';
+// Google Sign-In (verify ID tokens issued for this OAuth client)
+export const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '';
 
 // ...add other env variables as needed
 

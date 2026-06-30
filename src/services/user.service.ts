@@ -3,228 +3,99 @@
 import { IUser, IShippingAddress } from "../models/User";
 import { AppError } from "../utils/AppError";
 import { UserRepository } from "../repositories/user.repository";
-import { TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_FROM_NUMBER, EMAIL_HOST, EMAIL_PORT, EMAIL_USER, EMAIL_PASSWORD, EMAIL_FROM, OTP_VIA_PHONE, RESEND_API_KEY } from "../config/env";
-import twilio from "twilio";
-import nodemailer from "nodemailer";
-import { Resend } from "resend";
+import { GOOGLE_CLIENT_ID } from "../config/env";
+import { OAuth2Client } from "google-auth-library";
 
 const userRepository = new UserRepository();
 
-/**
- * Generate a random 6-digit OTP
- */
-function generateOTP(): string {
-  return Math.floor(100000 + Math.random() * 900000).toString();
-}
-
-/**
- * Send OTP via Email
- */
-async function sendOTPviaEmail(email: string, otp: string): Promise<void> {
-  const subject = 'Your RawBharat.shop Verification Code';
-  const html = `
-      <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: 0 auto;">
-        <h2 style="color: #333;">RawBharat.shop Verification</h2>
-        <p style="font-size: 16px;">Your verification code is:</p>
-        <div style="background-color: #f4f4f4; padding: 15px; text-align: center; font-size: 32px; font-weight: bold; letter-spacing: 5px; margin: 20px 0;">
-          ${otp}
-        </div>
-        <p style="color: #666;">This code is valid for 10 minutes.</p>
-        <p style="color: #666; font-size: 14px;">If you didn't request this code, please ignore this email.</p>
-      </div>
-    `;
-
-  // Preferred: Resend HTTP API (port 443) — works on hosts that block outbound SMTP.
-  if (RESEND_API_KEY) {
-    const resend = new Resend(RESEND_API_KEY);
-    const { error } = await resend.emails.send({
-      from: EMAIL_FROM,
-      to: email,
-      subject,
-      html,
-    });
-    if (error) {
-      throw new AppError("EMAIL_SEND_FAILED", `Failed to send OTP email: ${error.message}`, 502);
-    }
-    return;
-  }
-
-  // Fallback: SMTP via nodemailer (requires unblocked SMTP ports).
-  if (EMAIL_HOST && EMAIL_USER && EMAIL_PASSWORD) {
-    const transporter = nodemailer.createTransport({
-      host: EMAIL_HOST,
-      port: EMAIL_PORT,
-      secure: EMAIL_PORT === 465, // true for 465, false for other ports
-      auth: {
-        user: EMAIL_USER,
-        pass: EMAIL_PASSWORD,
-      },
-    });
-
-    await transporter.sendMail({ from: EMAIL_FROM, to: email, subject, html });
-    return;
-  }
-
-  // Last resort: no email provider configured — log OTP for local development.
-  console.warn("Email service env vars missing; logging OTP instead.");
-  console.log(`OTP for ${email}: ${otp}`);
-}
-
-/**
- * Send OTP via SMS (Twilio)
- */
-async function sendOTPviaPhone(phone: string, otp: string): Promise<void> {
-  // Fallback to console if Twilio env vars are missing
-  if (!TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN || !TWILIO_FROM_NUMBER) {
-    console.warn("Twilio env vars missing; logging OTP instead.");
-    console.log(`OTP for ${phone}: ${otp}`);
-    return;
-  }
-
-  const client = twilio(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN);
-
-  await client.messages.create({
-    body: `Your verification code is ${otp} to register or login to RawBharat.shop. It is valid for 10 minutes.`,
-    from: TWILIO_FROM_NUMBER,
-    to: `+91${phone}`,
-  });
-}
-
-/**
- * Send OTP - dynamically chooses email or phone based on OTP_VIA_PHONE env variable
- */
-async function sendOTP(contact: string, otp: string, isPhone: boolean = false): Promise<void> {
-  if (OTP_VIA_PHONE && isPhone) {
-    await sendOTPviaPhone(contact, otp);
-  } else {
-    await sendOTPviaEmail(contact, otp);
-  }
-}
+const googleClient = new OAuth2Client(GOOGLE_CLIENT_ID);
 
 export class UserService {
   /**
-   * Request OTP - generates and sends OTP to phone number or email
-   * Creates user if doesn't exist (first-time registration)
+   * Login / register with a Google ID token.
+   * The frontend obtains the token via Google Sign-In and sends it here.
+   * We verify it with Google, then upsert the user and return it.
    */
-  async requestOTP(phone: string, email?: string, role: string = "user") {
-    // Validate phone format
-    if (!phone || phone.trim().length === 0) {
+  async loginWithGoogle(idToken: string, role: string = "user") {
+    if (!idToken || idToken.trim().length === 0) {
       throw new AppError(
-        "INVALID_PHONE",
-        "Phone number is required",
+        "MISSING_ID_TOKEN",
+        "Google ID token is required",
         400,
-        [{ field: "phone", issue: "Phone number cannot be empty" }]
+        [{ field: "idToken", issue: "idToken cannot be empty" }]
       );
     }
 
-    // If using email OTP, validate email
-    if (!OTP_VIA_PHONE) {
-      if (!email || email.trim().length === 0) {
-        throw new AppError(
-          "INVALID_EMAIL",
-          "Email is required for OTP verification",
-          400,
-          [{ field: "email", issue: "Email cannot be empty" }]
-        );
-      }
+    if (!GOOGLE_CLIENT_ID) {
+      throw new AppError(
+        "GOOGLE_NOT_CONFIGURED",
+        "Google sign-in is not configured on the server",
+        500
+      );
     }
 
-    // Check if user exists
-    let user = await userRepository.findByPhone(phone);
+    // Verify the token signature, audience and expiry with Google.
+    let payload;
+    try {
+      const ticket = await googleClient.verifyIdToken({
+        idToken,
+        audience: GOOGLE_CLIENT_ID,
+      });
+      payload = ticket.getPayload();
+    } catch (err) {
+      throw new AppError(
+        "INVALID_ID_TOKEN",
+        "Invalid or expired Google token",
+        401,
+        [{ field: "idToken", issue: "Google token verification failed" }]
+      );
+    }
 
-    // If new user, create account
+    if (!payload || !payload.sub || !payload.email) {
+      throw new AppError(
+        "INVALID_ID_TOKEN",
+        "Google token did not contain the required profile information",
+        401
+      );
+    }
+
+    if (payload.email_verified === false) {
+      throw new AppError(
+        "EMAIL_NOT_VERIFIED",
+        "Google account email is not verified",
+        403,
+        [{ field: "email", issue: "Email must be verified with Google" }]
+      );
+    }
+
+    const googleId = payload.sub;
+    const email = payload.email;
+
+    // 1) Match an existing Google-linked account.
+    let user = await userRepository.findByGoogleId(googleId);
+
+    // 2) Otherwise link to an existing account with the same email.
     if (!user) {
+      user = await userRepository.findByEmail(email);
+    }
+
+    if (user) {
+      // Keep the record in sync with Google.
+      user.googleId = googleId;
+      if (!user.email) user.email = email;
+      if (!user.name && payload.name) user.name = payload.name;
+      if (payload.picture) user.picture = payload.picture;
+      await userRepository.save(user);
+    } else {
+      // 3) First-time sign-in: create the account.
       user = await userRepository.create({
-        phone,
-        name: "",
-        email: email || "",
+        googleId,
+        email,
+        name: payload.name || "",
+        picture: payload.picture,
         role: role as "user" | "admin" | undefined,
       });
-    } else if (email && !user.email) {
-      // Update email if provided and user doesn't have one
-      user.email = email;
     }
-
-    // Generate OTP
-    const otp = generateOTP();
-    const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes expiry
-
-    // Save OTP to user
-    user.otp = otp;
-    user.otpExpiresAt = otpExpiresAt;
-    await userRepository.save(user);
-
-    // Send OTP via Email or SMS based on configuration
-    const contact = OTP_VIA_PHONE ? phone : (email || user.email);
-    await sendOTP(contact as string, otp, OTP_VIA_PHONE);
-
-    return {
-      message: `OTP sent successfully via ${OTP_VIA_PHONE ? 'SMS' : 'email'}`,
-      phone,
-      email: email || user.email,
-      expiresIn: 600, // 10 minutes in seconds
-    };
-  }
-
-  /**
-   * Verify OTP and authenticate user
-   */
-  async verifyOTP(phone: string, otp: string) {
-    // Validate inputs
-    if (!phone || !otp) {
-      throw new AppError(
-        "INVALID_INPUT",
-        "Phone and OTP are required",
-        400,
-        [{ field: "phone/otp", issue: "Both phone and OTP must be provided" }]
-      );
-    }
-
-    // Find user by phone
-    const user = await userRepository.findByPhone(phone);
-
-    if (!user) {
-      throw new AppError(
-        "USER_NOT_FOUND",
-        "User not found. Please request OTP first.",
-        404,
-        [{ field: "phone", issue: "No user found with this phone number" }]
-      );
-    }
-
-    // Check if OTP exists and is not expired
-    if (!user.otp || !user.otpExpiresAt) {
-      throw new AppError(
-        "NO_OTP",
-        "No OTP found. Please request a new OTP.",
-        400,
-        [{ field: "otp", issue: "OTP not found or expired" }]
-      );
-    }
-
-    if (new Date() > user.otpExpiresAt) {
-      throw new AppError(
-        "OTP_EXPIRED",
-        "OTP has expired. Please request a new one.",
-        400,
-        [{ field: "otp", issue: "OTP has expired" }]
-      );
-    }
-
-    // Verify OTP
-    if (user.otp !== otp) {
-      throw new AppError(
-        "INVALID_OTP",
-        "Invalid OTP",
-        400,
-        [{ field: "otp", issue: "OTP does not match" }]
-      );
-    }
-
-    // Clear OTP from user
-    user.otp = undefined;
-    user.otpExpiresAt = undefined;
-    await userRepository.save(user);
 
     return user;
   }
