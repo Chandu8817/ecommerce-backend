@@ -3,9 +3,10 @@
 import { IUser, IShippingAddress } from "../models/User";
 import { AppError } from "../utils/AppError";
 import { UserRepository } from "../repositories/user.repository";
-import { TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_FROM_NUMBER, EMAIL_HOST, EMAIL_PORT, EMAIL_USER, EMAIL_PASSWORD, EMAIL_FROM, OTP_VIA_PHONE } from "../config/env";
+import { TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_FROM_NUMBER, EMAIL_HOST, EMAIL_PORT, EMAIL_USER, EMAIL_PASSWORD, EMAIL_FROM, OTP_VIA_PHONE, RESEND_API_KEY } from "../config/env";
 import twilio from "twilio";
 import nodemailer from "nodemailer";
+import { Resend } from "resend";
 
 const userRepository = new UserRepository();
 
@@ -20,28 +21,8 @@ function generateOTP(): string {
  * Send OTP via Email
  */
 async function sendOTPviaEmail(email: string, otp: string): Promise<void> {
-  // Fallback to console if email env vars are missing
-  if (!EMAIL_HOST || !EMAIL_USER || !EMAIL_PASSWORD) {
-    console.warn("Email service env vars missing; logging OTP instead.");
-    console.log(`OTP for ${email}: ${otp}`);
-    return;
-  }
-
-  const transporter = nodemailer.createTransport({
-    host: EMAIL_HOST,
-    port: EMAIL_PORT,
-    secure: EMAIL_PORT === 465, // true for 465, false for other ports
-    auth: {
-      user: EMAIL_USER,
-      pass: EMAIL_PASSWORD,
-    },
-  });
-
-  const mailOptions = {
-    from: EMAIL_FROM,
-    to: email,
-    subject: 'Your RawBharat.shop Verification Code',
-    html: `
+  const subject = 'Your RawBharat.shop Verification Code';
+  const html = `
       <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: 0 auto;">
         <h2 style="color: #333;">RawBharat.shop Verification</h2>
         <p style="font-size: 16px;">Your verification code is:</p>
@@ -51,10 +32,42 @@ async function sendOTPviaEmail(email: string, otp: string): Promise<void> {
         <p style="color: #666;">This code is valid for 10 minutes.</p>
         <p style="color: #666; font-size: 14px;">If you didn't request this code, please ignore this email.</p>
       </div>
-    `,
-  };
+    `;
 
-  await transporter.sendMail(mailOptions);
+  // Preferred: Resend HTTP API (port 443) — works on hosts that block outbound SMTP.
+  if (RESEND_API_KEY) {
+    const resend = new Resend(RESEND_API_KEY);
+    const { error } = await resend.emails.send({
+      from: EMAIL_FROM,
+      to: email,
+      subject,
+      html,
+    });
+    if (error) {
+      throw new AppError("EMAIL_SEND_FAILED", `Failed to send OTP email: ${error.message}`, 502);
+    }
+    return;
+  }
+
+  // Fallback: SMTP via nodemailer (requires unblocked SMTP ports).
+  if (EMAIL_HOST && EMAIL_USER && EMAIL_PASSWORD) {
+    const transporter = nodemailer.createTransport({
+      host: EMAIL_HOST,
+      port: EMAIL_PORT,
+      secure: EMAIL_PORT === 465, // true for 465, false for other ports
+      auth: {
+        user: EMAIL_USER,
+        pass: EMAIL_PASSWORD,
+      },
+    });
+
+    await transporter.sendMail({ from: EMAIL_FROM, to: email, subject, html });
+    return;
+  }
+
+  // Last resort: no email provider configured — log OTP for local development.
+  console.warn("Email service env vars missing; logging OTP instead.");
+  console.log(`OTP for ${email}: ${otp}`);
 }
 
 /**

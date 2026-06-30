@@ -24,6 +24,9 @@ export const EMAIL_USER = process.env.EMAIL_USER || '';
 export const EMAIL_PASSWORD = process.env.EMAIL_PASSWORD || '';
 export const EMAIL_FROM = process.env.EMAIL_FROM || 'noreply@rawbharat.shop';
 
+// Resend HTTP email API (works on hosts that block outbound SMTP, e.g. Render free tier)
+export const RESEND_API_KEY = process.env.RESEND_API_KEY || '';
+
 // OTP Configuration - set to 'false' to use email, 'true' to use phone/SMS
 export const OTP_VIA_PHONE = process.env.OTP_VIA_PHONE === 'true';
 
